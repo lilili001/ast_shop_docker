@@ -1,0 +1,93 @@
+version: '2'
+services:
+  # The application
+  nginx:
+    image: nginx:latest
+    ports:
+      - "8081:80"
+    restart: always
+    volumes:
+      - ./app:/www/web
+      - ./services/web/nginx/conf:/etc/nginx
+      - ./services/web/nginx/logs:/www/web_logs
+    depends_on:
+      - php
+    networks:
+      - code-network
+  php:
+    build:
+      context: './services/php/docker/Dockerfile'
+    restart: always
+    working_dir: /var/www
+    volumes:
+      - app: /var/www
+    depends_on:
+      - mysql
+    networks:
+      - code-network
+  mysql:
+    image: daocloud.io/mysql:5.7.4
+    volumes:
+      - ./services/mysql/data:/var/lib/mysql
+    environment:
+      - "MYSQL_DATABASE=astystore"
+      #- "MYSQL_USER=homestead"
+      #- "MYSQL_PASSWORD=secret"
+      - "MYSQL_ROOT_PASSWORD=123456"
+    restart: always
+    ports:
+      - "3306:3306"
+    networks:
+      - code-network
+  nodeApp1:
+    build:
+      context: './services/nodejs/docker/Dockerfile'
+#    working_dir: /var/www
+#    volumes:
+#        - app: /var/www
+    ports:
+      - "3002:3002"
+    networks:
+      - code-network
+  redis:
+    image: redis:4.0
+    restart: always
+    environment:
+      REDIS_PASS_FILE: /run/secrets/redis-password
+    command: [
+      "bash", "-c",
+      '
+         docker-entrypoint.sh
+         --requirepass "$$(cat $$REDIS_PASS_FILE)"
+        '
+    ]
+    volumes:
+      - ./services/redis/etc/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./services/redis/data:/data
+      - ./services/redis/etc/redis-password:/run/secrets/redis-password
+    networks:
+      - code-network
+  elasticsearch:
+    build: ./services/elasticsearch/docker/Dockerfile
+    volumes:
+      - /services/elasticsearch/data:/usr/share/elasticsearch/data
+      - /services/elasticsearch/plugins:/usr/share/elasticsearch/plugins
+    environment:
+      - cluster.name=laradock-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    mem_limit: 512m
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    depends_on:
+      - php-fpm
+    networks:
+      - code-network
+networks:
+  code-network:
+    driver: bridge

@@ -39,13 +39,13 @@ RUN apk add --no-cache --virtual .build-deps \
 RUN composer config -g repo.packagist composer https://packagist.laravel-china.org
 
 # install prestissimo
-RUN composer global require "hirak/prestissimo"
+#RUN composer global require "hirak/prestissimo"
 
 # install laravel envoy
-RUN composer global require "laravel/envoy"
+#RUN composer global require "laravel/envoy"
 
 #install laravel installer
-RUN composer global require "laravel/installer"
+#RUN composer global require "laravel/installer"
 
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
@@ -58,8 +58,8 @@ RUN apk update \
   && rm -rf /var/cache/apk/* \
   && /bin/bash \
   && touch ~/.bashrc \
-  && curl -o- -L https://yarnpkg.com/install.sh | bash \
-  && yarn config set registry 'https://registry.npm.taobao.org' \
-  && npm install -g cnpm --registry=https://registry.npm.taobao.org
+#  && sudo curl -o- -L https://yarnpkg.com/install.sh | bash \
+#  && yarn config set registry 'https://registry.npm.taobao.org' \
+#  && npm install -g cnpm --registry=https://registry.npm.taobao.org
 
 WORKDIR /var/www
